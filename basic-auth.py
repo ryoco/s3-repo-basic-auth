@@ -63,10 +63,16 @@ def head_object_to_s3_repo(path):
 @app.route("/<path:path>", methods=['GET'])
 @requires_auth
 def get_object_to_s3_repo(path):
-  obj = client.get_object(Bucket=bucket_name, Key=path)
-  return make_response(obj["Body"].read(),
-                       obj["ResponseMetadata"]["HTTPStatusCode"],
-                       obj["ResponseMetadata"]["HTTPHeaders"])
+  obj = None
+  try:
+    obj = client.get_object(Bucket=bucket_name, Key=path)
+  except botocore.exceptions.ClientError as e:
+    return make_response(jsonify(e.response["ResponseMetadata"]["HTTPHeaders"]),
+                         e.response["ResponseMetadata"]["HTTPStatusCode"])
+  else:
+    return make_response(obj["Body"].read(),
+                         obj["ResponseMetadata"]["HTTPStatusCode"],
+                         obj["ResponseMetadata"]["HTTPHeaders"])
 
 
 @app.route("/<path:path>", methods=['PUT'])
